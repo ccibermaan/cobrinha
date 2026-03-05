@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Snake</title>
+    <!-- Estilos do jogo -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Brython Core e Stdlib -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.12.0/brython.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.12.0/brython_stdlib.js"></script>
+
+    <!-- Fonte moderna do Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body onload="brython()">
+    <div class="game-wrapper">
+        <h1>Antigravity Snake</h1>
+        <div id="score">Pontuação: 0</div>
+
+        <!-- O Canvas será gerado aqui pelo módulo antigravity -->
+        <div id="game-container"></div>
+
+        <button id="restart-btn" style="display:none;" onclick="location.reload()">Jogar Novamente</button>
+
+        <div class="controls-hint">
+            Use as <strong>Setas Direcionais</strong> (ou WASD) para jogar.
+        </div>
+    </div>
+
+    <!-- Lógica do Jogo em Python -->
+    <script type="text/python">
+        from browser import document, timer
+        from antigravity import Canvas
+        import random
+
+        # Configurações do jogo
+        CANVAS_SIZE = 400
+        GRID_SIZE = 20
+        FPS = 12
+        
+        # Inicializa o Canvas dentro do game-container usando nossa lib 'antigravity'
+        canvas = Canvas(width=CANVAS_SIZE, height=CANVAS_SIZE, parent=document['game-container'])
+        
+        # Estado inicial
+        snake = [(200, 200), (180, 200), (160, 200)]  # Cobra começa com 3 de tamanho
+        direction = (GRID_SIZE, 0)  # Movimentando para a direita no início
+        next_direction = direction
+        score = 0
+        game_over = False
+
+        def spawn_food():
+            while True:
+                x = random.randint(0, (canvas.width - GRID_SIZE) // GRID_SIZE) * GRID_SIZE
+                y = random.randint(0, (canvas.height - GRID_SIZE) // GRID_SIZE) * GRID_SIZE
+                if (x, y) not in snake:
+                    return x, y
+
+        food = spawn_food()
+
+        def draw():
+            canvas.clear()
+            
+            # Desenha a comida com um vermelho vibrante
+            canvas.ctx.shadowBlur = 10
+            canvas.ctx.shadowColor = "#ff4757"
+            canvas.rectangle(food[0], food[1], GRID_SIZE - 2, GRID_SIZE - 2, fill="#ff4757")
+            canvas.ctx.shadowBlur = 0 # Reseta o blur
+            
+            # Desenha a cobra
+            for i, segment in enumerate(snake):
+                if i == 0:
+                    color = "#00f2fe" # Cabeça (Ciano)
+                else:
+                    color = "#4facfe" # Corpo (Azul Claro)
+                
+                # Efeito de neon para a cabeça
+                if i == 0:
+                    canvas.ctx.shadowBlur = 8
+                    canvas.ctx.shadowColor = "#00f2fe"
+                else:
+                    canvas.ctx.shadowBlur = 0
+
+                canvas.rectangle(segment[0], segment[1], GRID_SIZE - 2, GRID_SIZE - 2, fill=color)
+            
+            canvas.ctx.shadowBlur = 0
+            
+            # Tela de Game Over
+            if game_over:
+                canvas.ctx.fillStyle = "rgba(0, 0, 0, 0.7)"
+                canvas.ctx.fillRect(0, 0, canvas.width, canvas.height)
+                canvas.text(canvas.width // 2, canvas.height // 2, "GAME OVER", fill="#ff4757", font="bold 40px Inter", align="center")
+
+        def update():
+            global game_over, score, food, direction
+            if game_over:
+                return
+
+            direction = next_direction
+
+            head_x, head_y = snake[0]
+            dx, dy = direction
+            new_head = (head_x + dx, head_y + dy)
+
+            # Detecta colisão com as paredes
+            if new_head[0] < 0 or new_head[0] >= canvas.width or new_head[1] < 0 or new_head[1] >= canvas.height:
+                game_over = True
+            
+            # Detecta colisão com o próprio corpo
+            if new_head in snake:
+                game_over = True
+            
+            if game_over:
+                document["restart-btn"].style.display = "block"
+                draw()
+                return
+
+            snake.insert(0, new_head)
+
+            # Verifica se comeu a comida
+            if new_head == food:
+                score += 10
+                document["score"].text = f"Pontuação: {score}"
+                food = spawn_food()
+            else:
+                snake.pop()
+
+            draw()
+
+        def keydown(ev):
+            global next_direction
+            # Impede a página de "rolar" ao usar as setas
+            if ev.key in ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]:
+                ev.preventDefault()
+                
+            if ev.key in ["ArrowUp", "w", "W"] and direction != (0, GRID_SIZE):
+                next_direction = (0, -GRID_SIZE)
+            elif ev.key in ["ArrowDown", "s", "S"] and direction != (0, -GRID_SIZE):
+                next_direction = (0, GRID_SIZE)
+            elif ev.key in ["ArrowLeft", "a", "A"] and direction != (GRID_SIZE, 0):
+                next_direction = (-GRID_SIZE, 0)
+            elif ev.key in ["ArrowRight", "d", "D"] and direction != (-GRID_SIZE, 0):
+                next_direction = (GRID_SIZE, 0)
+
+        document.bind("keydown", keydown)
+
+        def loop():
+            update()
+            if not game_over:
+                timer.set_timeout(loop, 1000 // FPS)
+
+        # Inicia o loop principal do jogo
+        loop()
+    </script>
+</body>
+
+</html>
