@@ -30,6 +30,7 @@ h1 {
     margin: 0 0 10px 0;
     background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
 }
@@ -55,28 +56,24 @@ h1 {
     display: block;
 }
 
-#restart-btn {
+#start-btn {
     padding: 12px 30px;
     font-size: 1.2rem;
     border: none;
     border-radius: 8px;
-    background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
-    color: white;
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    color: #13131a;
     cursor: pointer;
     font-weight: bold;
     transition: all 0.2s ease;
-    box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+    box-shadow: 0 5px 15px rgba(0, 242, 254, 0.4);
     font-family: 'Inter', sans-serif;
+    margin-top: 10px;
 }
 
-#restart-btn:hover {
+#start-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 71, 87, 0.6);
-}
-
-#restart-btn:active {
-    transform: translateY(1px);
-    box-shadow: 0 3px 10px rgba(255, 71, 87, 0.4);
+    box-shadow: 0 8px 20px rgba(0, 242, 254, 0.6);
 }
 
 .controls-hint {

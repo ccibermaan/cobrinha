@@ -19,10 +19,9 @@
 <body onload="brython()">
     <div class="game-wrapper">
         <h1>Antigravity Snake</h1>
-        <div id="score">Pontuação: 0</div>
-
-        <!-- O Canvas será gerado aqui pelo módulo antigravity -->
+        <div id="score">Pontuação: 0 | Recorde: 0</div>
         <div id="game-container"></div>
+        <button id="start-btn">INICIAR JOGO</button>
 
         <button id="restart-btn" style="display:none;" onclick="location.reload()">Jogar Novamente</button>
 
@@ -42,15 +41,22 @@
         GRID_SIZE = 20
         FPS = 12
         
-        # Inicializa o Canvas dentro do game-container usando nossa lib 'antigravity'
+        # Inicializa o Canvas
         canvas = Canvas(width=CANVAS_SIZE, height=CANVAS_SIZE, parent=document['game-container'])
         
+        # Carrega High Score
+        high_score = int(document.localStorage.getItem('snake-high-score') or 0)
+        
+        def update_score_display():
+            document["score"].text = f"Pontuação: {score} | Recorde: {high_score}"
+
         # Estado inicial
-        snake = [(200, 200), (180, 200), (160, 200)]  # Cobra começa com 3 de tamanho
-        direction = (GRID_SIZE, 0)  # Movimentando para a direita no início
+        snake = [(200, 200), (180, 200), (160, 200)]
+        direction = (GRID_SIZE, 0)
         next_direction = direction
         score = 0
         game_over = False
+        running = False # Jogo começa parado
 
         def spawn_food():
             while True:
@@ -62,7 +68,22 @@
         food = spawn_food()
 
         def draw():
-            canvas.clear()
+            # Fundo opaco para não ter "espaço vazio" transparente
+            canvas.ctx.fillStyle = "#1e1e2f"
+            canvas.ctx.fillRect(0, 0, canvas.width, canvas.height)
+            
+            # Grade sutil (opcional, ajuda a alinhar visualmente)
+            canvas.ctx.strokeStyle = "rgba(255, 255, 255, 0.05)"
+            for x in range(0, canvas.width, GRID_SIZE):
+                canvas.ctx.beginPath()
+                canvas.ctx.moveTo(x, 0)
+                canvas.ctx.lineTo(x, canvas.height)
+                canvas.ctx.stroke()
+            for y in range(0, canvas.height, GRID_SIZE):
+                canvas.ctx.beginPath()
+                canvas.ctx.moveTo(0, y)
+                canvas.ctx.lineTo(canvas.width, y)
+                canvas.ctx.stroke()
             
             # Desenha a comida com um vermelho vibrante
             canvas.ctx.shadowBlur = 10
@@ -109,12 +130,15 @@
             if new_head[0] < 0 or new_head[0] >= canvas.width or new_head[1] < 0 or new_head[1] >= canvas.height:
                 game_over = True
             
-            # Detecta colisão com o próprio corpo
-            if new_head in snake:
+            # Detecta colisão com o próprio corpo (exceto a pontinha da cauda que vai sair)
+            if new_head in snake[:-1]:
                 game_over = True
             
             if game_over:
-                document["restart-btn"].style.display = "block"
+                if score > high_score:
+                    document.localStorage.setItem('snake-high-score', score)
+                document["start-btn"].style.display = "block"
+                document["start-btn"].text = "TENTAR NOVAMENTE"
                 draw()
                 return
 
@@ -123,7 +147,10 @@
             # Verifica se comeu a comida
             if new_head == food:
                 score += 10
-                document["score"].text = f"Pontuação: {score}"
+                if score > high_score:
+                    global high_score
+                    high_score = score
+                update_score_display()
                 food = spawn_food()
             else:
                 snake.pop()
@@ -147,13 +174,39 @@
 
         document.bind("keydown", keydown)
 
+        # Listener para o botão de Iniciar
+        def start_game(ev):
+            nonlocal running, game_over, score, snake, direction, next_direction, food
+            if not running:
+                if game_over:
+                    # Reset state
+                    snake = [(200, 200), (180, 200), (160, 200)]
+                    direction = (GRID_SIZE, 0)
+                    next_direction = direction
+                    score = 0
+                    game_over = False
+                    food = spawn_food()
+                    update_score_display()
+                
+                running = True
+                document["start-btn"].style.display = "none"
+                loop()
+
+        document["start-btn"].bind("click", start_game)
+        update_score_display()
+
         def loop():
+            if game_over:
+                nonlocal running
+                running = False
+                return
+            
             update()
-            if not game_over:
+            if running:
                 timer.set_timeout(loop, 1000 // FPS)
 
-        # Inicia o loop principal do jogo
-        loop()
+        # Desenha tela inicial
+        draw()
     </script>
 </body>
 
