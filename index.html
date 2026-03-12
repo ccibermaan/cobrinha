@@ -67,7 +67,7 @@
             # Desenha a comida com um vermelho vibrante
             canvas.ctx.shadowBlur = 10
             canvas.ctx.shadowColor = "#ff4757"
-            canvas.rectangle(food[0], food[1], GRID_SIZE - 2, GRID_SIZE - 2, fill="#ff4757")
+            canvas.rectangle(food[0], food[1], GRID_SIZE, GRID_SIZE, fill="#ff4757")
             canvas.ctx.shadowBlur = 0 # Reseta o blur
             
             # Desenha a cobra
@@ -84,7 +84,7 @@
                 else:
                     canvas.ctx.shadowBlur = 0
 
-                canvas.rectangle(segment[0], segment[1], GRID_SIZE - 2, GRID_SIZE - 2, fill=color)
+                canvas.rectangle(segment[0], segment[1], GRID_SIZE, GRID_SIZE, fill=color)
             
             canvas.ctx.shadowBlur = 0
             
